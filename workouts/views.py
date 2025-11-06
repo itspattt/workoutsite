@@ -8,24 +8,23 @@ from .forms import WorkoutForm, WorkoutRouteForm
 import json
 
 
+@login_required
 def workout_list(request):
     """
-    Display list of all workouts.
+    Display list of all workouts for the logged-in user.
     """
-    # Get or create a default user for demo purposes
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workouts = Workout.objects.filter(user=user)
+    workouts = Workout.objects.filter(user=request.user)
     return render(request, 'workouts/workout_list.html', {
         'workouts': workouts
     })
 
 
+@login_required
 def workout_detail(request, pk):
     """
     Display detailed view of a single workout, including route if available.
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workout = get_object_or_404(Workout, pk=pk, user=user)
+    workout = get_object_or_404(Workout, pk=pk, user=request.user)
     has_route = hasattr(workout, 'route')
     
     return render(request, 'workouts/workout_detail.html', {
@@ -34,18 +33,17 @@ def workout_detail(request, pk):
     })
 
 
+@login_required
 def workout_create(request):
     """
     Create a new workout with manual logging.
     Feature: Manual workout logging (type, duration, calories, distance)
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    
     if request.method == 'POST':
         form = WorkoutForm(request.POST)
         if form.is_valid():
             workout = form.save(commit=False)
-            workout.user = user
+            workout.user = request.user
             workout.save()
             messages.success(request, 'Workout logged successfully!')
             return redirect('workout_detail', pk=workout.pk)
@@ -58,12 +56,12 @@ def workout_create(request):
     })
 
 
+@login_required
 def workout_edit(request, pk):
     """
     Edit an existing workout.
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workout = get_object_or_404(Workout, pk=pk, user=user)
+    workout = get_object_or_404(Workout, pk=pk, user=request.user)
     
     if request.method == 'POST':
         form = WorkoutForm(request.POST, instance=workout)
@@ -81,12 +79,12 @@ def workout_edit(request, pk):
     })
 
 
+@login_required
 def workout_delete(request, pk):
     """
     Delete a workout.
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workout = get_object_or_404(Workout, pk=pk, user=user)
+    workout = get_object_or_404(Workout, pk=pk, user=request.user)
     
     if request.method == 'POST':
         workout.delete()
@@ -98,13 +96,13 @@ def workout_delete(request, pk):
     })
 
 
+@login_required
 def workout_add_route(request, pk):
     """
     Add or edit a route for an existing workout.
     Feature: Record workout route on a map for visualization
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workout = get_object_or_404(Workout, pk=pk, user=user)
+    workout = get_object_or_404(Workout, pk=pk, user=request.user)
     
     # Check if route already exists
     try:
@@ -145,12 +143,12 @@ def workout_add_route(request, pk):
     })
 
 
+@login_required
 def workout_route_delete(request, pk):
     """
     Delete a workout route.
     """
-    user, created = User.objects.get_or_create(username='demo_user', defaults={'email': 'demo@example.com'})
-    workout = get_object_or_404(Workout, pk=pk, user=user)
+    workout = get_object_or_404(Workout, pk=pk, user=request.user)
     
     try:
         route = workout.route
@@ -167,4 +165,3 @@ def workout_route_delete(request, pk):
         'workout': workout,
         'route': route
     })
-

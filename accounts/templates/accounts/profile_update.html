@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Profile</title>
+</head>
+<body>
+    <h2>Update Profile</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>User Info</legend>
+            {{ user_form.as_p }}
+        </fieldset>
+
+        <fieldset>
+            <legend>Profile Info</legend>
+            {{ profile_form.as_p }}
+        </fieldset>
+
+        <button type="submit">Update</button>
+    </form>
+
+    <a href="{% url 'logout' %}">Logout</a>
+</body>
+</html>

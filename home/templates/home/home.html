@@ -6,9 +6,48 @@
 <div class="text-center mt-5">
     <h1>Welcome to Workout Tracker!</h1>
     <p class="lead">Log your workouts and track your progress.</p>
-    <div class="mt-4">
-        <a href="{% url 'workout_create' %}" class="btn btn-primary btn-lg me-2">Log Workout</a>
-        <a href="{% url 'workout_list' %}" class="btn btn-secondary btn-lg">View Workouts</a>
-    </div>
+    
+    {% if user.is_authenticated %}
+        <div class="mt-4">
+            <p class="mb-4">Hello, <strong>{{ user.username }}</strong>! Ready to crush your fitness goals?</p>
+            <a href="{% url 'workout_create' %}" class="btn btn-primary btn-lg me-2">Log Workout</a>
+            <a href="{% url 'workout_list' %}" class="btn btn-secondary btn-lg">View Workouts</a>
+        </div>
+    {% else %}
+        <div class="mt-4">
+            <p class="mb-4">Start tracking your fitness journey today!</p>
+            <a href="{% url 'signup' %}" class="btn btn-primary btn-lg me-2">Sign Up</a>
+            <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Login</a>
+        </div>
+        <div class="mt-5">
+            <h3>Why Track Your Workouts?</h3>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">📊 Track Progress</h5>
+                            <p class="card-text">Monitor your improvement over time with detailed statistics.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">🗺️ Map Your Routes</h5>
+                            <p class="card-text">Visualize your running and cycling routes on interactive maps.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">🎯 Achieve Goals</h5>
+                            <p class="card-text">Set and reach your fitness milestones with data-driven insights.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

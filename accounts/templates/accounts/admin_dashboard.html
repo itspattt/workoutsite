@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-3">📊 Admin Dashboard</h1>
+        <p class="text-muted">Overall app statistics and insights</p>
+    </div>
+</div>
+
+<!-- User Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">👥 User Statistics</h3>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Users</h5>
+                <p class="display-4">{{ total_users }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Active (30 days)</h5>
+                <p class="display-4">{{ active_users_30d }}</p>
+                <small>{{ active_users_30d|default:0 }} of {{ total_users }} users</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">Active (7 days)</h5>
+                <p class="display-4">{{ active_users_7d }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">New (30 days)</h5>
+                <p class="display-4">{{ new_users_30d }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">🏃 Workout Statistics</h3>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Workouts</h5>
+                <p class="display-4 text-primary">{{ total_workouts }}</p>
+                <hr>
+                <small class="text-muted">
+                    Last 30 days: {{ workouts_30d }}<br>
+                    Last 7 days: {{ workouts_7d }}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Workouts with Routes</h5>
+                <p class="display-4 text-success">{{ workouts_with_routes }}</p>
+                <hr>
+                <small class="text-muted">
+                    Total routes: {{ total_routes }}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Avg Duration</h5>
+                <p class="display-4 text-info">{{ avg_duration }}</p>
+                <small>minutes</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">📈 Overall Metrics</h3>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="metric-label">Total Duration</div>
+            <div class="metric-value">{{ total_duration_hours }}</div>
+            <small>hours ({{ total_duration }} min)</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="metric-label">Avg Duration</div>
+            <div class="metric-value">{{ avg_duration }}</div>
+            <small>minutes per workout</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="metric-label">Total Distance</div>
+            <div class="metric-value">{{ total_distance }}</div>
+            <small>km (avg: {{ avg_distance }} km)</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="metric-label">Total Calories</div>
+            <div class="metric-value">{{ total_calories|floatformat:0 }}</div>
+            <small>kcal (avg: {{ avg_calories|floatformat:0 }} kcal)</small>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Type Distribution -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">🎯 Workout Type Distribution</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Count</th>
+                            <th>Avg Duration</th>
+                            <th>Total Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for wt in workout_types %}
+                        <tr>
+                            <td>
+                                <span class="workout-type-badge bg-primary">
+                                    {{ wt.workout_type|title }}
+                                </span>
+                            </td>
+                            <td><strong>{{ wt.count }}</strong></td>
+                            <td>{{ wt.avg_duration|floatformat:1 }} min</td>
+                            <td>{{ wt.total_duration }} min</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No workouts yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Users -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">🏆 Top Users by Workout Count</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Workouts</th>
+                            <th>Total Time</th>
+                            <th>Distance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in top_users %}
+                        <tr>
+                            <td><strong>{{ forloop.counter }}</strong></td>
+                            <td>{{ user.username }}</td>
+                            <td><span class="badge bg-primary">{{ user.workout_count }}</span></td>
+                            <td>{{ user.total_duration|default:0 }} min</td>
+                            <td>{{ user.total_distance|default:0|floatformat:1 }} km</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No users with workouts yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Routes -->
+{% if top_routes %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">🗺️ Recent Routes</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Workout</th>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Distance</th>
+                            <th>Route Points</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in top_routes %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'workout_detail' route.workout.pk %}">
+                                    {{ route.workout.title }}
+                                </a>
+                            </td>
+                            <td>{{ route.workout.user.username }}</td>
+                            <td>
+                                <span class="workout-type-badge bg-info">
+                                    {{ route.workout.workout_type|title }}
+                                </span>
+                            </td>
+                            <td>{{ route.workout.distance|default:"—" }} km</td>
+                            <td>{{ route.total_points }} points</td>
+                            <td>{{ route.workout.workout_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">⏱️ Recent Activity</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Workout</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Distance</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workout in recent_workouts %}
+                        <tr>
+                            <td>{{ workout.user.username }}</td>
+                            <td>
+                                <a href="{% url 'workout_detail' workout.pk %}">
+                                    {{ workout.title }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="workout-type-badge bg-secondary">
+                                    {{ workout.workout_type|title }}
+                                </span>
+                            </td>
+                            <td>{{ workout.duration }} min</td>
+                            <td>{{ workout.distance|default:"—" }} km</td>
+                            <td>{{ workout.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No recent activity</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
