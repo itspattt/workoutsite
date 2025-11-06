@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Route - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h2 class="mb-4">Delete Route</h2>
+                
+                <div class="alert alert-warning">
+                    <strong>⚠️ Warning:</strong> This will delete the route but keep the workout.
+                </div>
+                
+                <p>Are you sure you want to delete the route for this workout?</p>
+                
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h5>{{ workout.title }}</h5>
+                        <p class="mb-0"><strong>Route Points:</strong> {{ route.total_points }}</p>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            Yes, Delete Route
+                        </button>
+                        <a href="{% url 'workout_detail' workout.pk %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

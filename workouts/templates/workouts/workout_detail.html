@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ workout.title }} - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="mb-2">{{ workout.title }}</h2>
+                        <span class="badge bg-primary workout-type-badge">
+                            {{ workout.get_workout_type_display }}
+                        </span>
+                    </div>
+                    <div>
+                        <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm">
+                            Edit
+                        </a>
+                        <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    <strong>Date:</strong> {{ workout.workout_date|date:"F d, Y - g:i A" }}
+                </p>
+                
+                {% if workout.description %}
+                    <div class="mb-4">
+                        <h5>Notes</h5>
+                        <p>{{ workout.description }}</p>
+                    </div>
+                {% endif %}
+                
+                <!-- Route Map -->
+                {% if has_route %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Workout Route</h5>
+                            <div>
+                                <a href="{% url 'workout_add_route' workout.pk %}" class="btn btn-outline-primary btn-sm">
+                                    Edit Route
+                                </a>
+                                <a href="{% url 'workout_route_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
+                                    Delete Route
+                                </a>
+                            </div>
+                        </div>
+                        <div id="map"></div>
+                        
+                        {% if workout.route.start_location or workout.route.end_location %}
+                            <div class="mt-3">
+                                {% if workout.route.start_location %}
+                                    <p><strong>Start:</strong> {{ workout.route.start_location }}</p>
+                                {% endif %}
+                                {% if workout.route.end_location %}
+                                    <p><strong>End:</strong> {{ workout.route.end_location }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <strong>No route recorded</strong>
+                        <p class="mb-0">
+                            <a href="{% url 'workout_add_route' workout.pk %}" class="alert-link">
+                                Add a route to visualize where you trained
+                            </a>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Metrics -->
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Duration</h6>
+                <div class="metric-value text-primary">{{ workout.duration }}</div>
+                <div class="text-muted">minutes</div>
+            </div>
+        </div>
+        
+        {% if workout.distance %}
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Distance</h6>
+                <div class="metric-value text-success">{{ workout.distance }}</div>
+                <div class="text-muted">kilometers</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if workout.calories %}
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Calories</h6>
+                <div class="metric-value text-danger">{{ workout.calories }}</div>
+                <div class="text-muted">burned</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <a href="{% url 'workout_list' %}" class="btn btn-outline-secondary w-100">
+            ← Back to Workouts
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_route %}
+<script>
+    // Initialize map
+    const routeData = {{ workout.route.route_data|safe }};
+    
+    if (routeData && routeData.length > 0) {
+        // Calculate center of route
+        const centerLat = routeData.reduce((sum, point) => sum + point[0], 0) / routeData.length;
+        const centerLng = routeData.reduce((sum, point) => sum + point[1], 0) / routeData.length;
+        
+        // Create map
+        const map = L.map('map').setView([centerLat, centerLng], 13);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Draw route
+        const polyline = L.polyline(routeData, {
+            color: '#fc5200',
+            weight: 4,
+            opacity: 0.8
+        }).addTo(map);
+        
+        // Add start marker (green)
+        L.marker(routeData[0], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map).bindPopup('Start');
+        
+        // Add end marker (red)
+        if (routeData.length > 1) {
+            L.marker(routeData[routeData.length - 1], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map).bindPopup('End');
+        }
+        
+        // Fit bounds to show entire route
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+    }
+</script>
+{% endif %}
+{% endblock %}
+
