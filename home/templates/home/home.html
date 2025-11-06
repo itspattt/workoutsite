@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1>Welcome to Workout Tracker!</h1>
+    <p class="lead">Log your workouts and track your progress.</p>
+    <div class="mt-4">
+        <a href="{% url 'workout_create' %}" class="btn btn-primary btn-lg me-2">Log Workout</a>
+        <a href="{% url 'workout_list' %}" class="btn btn-secondary btn-lg">View Workouts</a>
+    </div>
+</div>
+{% endblock %}
