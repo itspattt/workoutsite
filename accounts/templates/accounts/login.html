@@ -1,23 +1,67 @@
-<!-- accounts/templates/accounts/login.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color:red">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <label>Username:</label>
-        <input type="text" name="username" required><br>
-        <label>Password:</label>
-        <input type="password" name="password" required><br>
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Login - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="min-height: 70vh; align-items: center;">
+    <div class="col-md-5 col-lg-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-2">Welcome Back</h2>
+            <p class="text-muted">Login to track your workouts</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username"
+                    required
+                    autofocus
+                >
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                    type="password" 
+                    class="form-control" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Login
+                </button>
+            </div>
+
+            <div class="text-center">
+                <p class="text-muted mb-0">
+                    Don't have an account? 
+                    <a href="{% url 'signup' %}" class="text-decoration-none" style="color: var(--primary-color); font-weight: 600;">
+                        Sign Up
+                    </a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

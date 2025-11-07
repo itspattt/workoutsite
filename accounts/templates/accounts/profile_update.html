@@ -1,32 +1,97 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Update Profile</title>
-</head>
-<body>
-    <h2>Update Profile</h2>
+{% extends "base.html" %}
 
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color: green;">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+{% block title %}Profile - Workout Tracker{% endblock %}
 
-    <form method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>User Info</legend>
-            {{ user_form.as_p }}
-        </fieldset>
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-2">Profile Settings</h2>
+            <p class="text-muted">Update your account information</p>
+        </div>
 
-        <fieldset>
-            <legend>Profile Info</legend>
-            {{ profile_form.as_p }}
-        </fieldset>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
 
-        <button type="submit">Update</button>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <h5 class="mb-3">Account Info</h5>
+                {{ user_form.as_p }}
+            </div>
 
-    <a href="{% url 'logout' %}">Logout</a>
-</body>
-</html>
+            <div class="mb-4">
+                <h5 class="mb-3">Personal Info</h5>
+                {{ profile_form.as_p }}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                </button>
+                <a href="{% url 'workout_list' %}" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Style the Django form fields */
+    form p {
+        margin-bottom: 1rem;
+    }
+    
+    form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    form input[type="text"],
+    form input[type="email"],
+    form input[type="number"],
+    form select,
+    form textarea {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    form input:focus,
+    form select:focus,
+    form textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(252, 82, 0, 0.15);
+    }
+    
+    form .helptext {
+        display: block;
+        font-size: 0.875rem;
+        color: #718096;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #4a5568;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+        color: #2d3748;
+    }
+</style>
+{% endblock %}
