@@ -5,19 +5,20 @@
 {% block content %}
 <div class="row justify-content-center py-4">
     <div class="col-md-8 col-lg-6">
+
         <div class="text-center mb-4">
             <h2 class="fw-bold mb-2">Profile Settings</h2>
             <p class="text-muted">Update your account information</p>
         </div>
 
-        {% if messages %}
+        <!-- {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
-        {% endif %}
+        {% endif %} -->
 
         <form method="post">
             {% csrf_token %}
@@ -27,9 +28,198 @@
                 {{ user_form.as_p }}
             </div>
 
-            <div class="mb-4">
+            <!-- <div class="mb-4">
                 <h5 class="mb-3">Personal Info</h5>
                 {{ profile_form.as_p }}
+            </div> -->
+
+            <!-- <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Personal Info</h5>
+
+                <div class="form-check form-switch">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="unitToggle"
+                    {% if profile_form.initial.unit_preference == "imperial" %}checked{% endif %}
+                >
+                <label class="form-check-label" for="unitToggle">
+                    <span id="unitToggleLabel">
+                    {% if profile_form.initial.unit_preference == "imperial" %}
+                        Imperial
+                    {% else %}
+                        Metric
+                    {% endif %}
+                    </span>
+                </label>
+                </div>
+            </div>
+
+            {{ profile_form.unit_preference }}
+
+            <p>
+                {{ profile_form.age.label_tag }}
+                {{ profile_form.age }}
+            </p>
+
+            <div class="mb-3">
+                <label for="{{ profile_form.weight.id_for_label }}" class="form-label">
+                Weight
+                </label>
+                <div class="input-group">
+                {{ profile_form.weight }}
+                <span class="input-group-text" id="weightUnitLabel">
+                    {% if profile_form.initial.unit_preference == "imperial" %}
+                    lbs
+                    {% else %}
+                    kg
+                    {% endif %}
+                </span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ profile_form.height.id_for_label }}" class="form-label">
+                Height
+                </label>
+                <div class="input-group">
+                {{ profile_form.height }}
+                <span class="input-group-text" id="heightUnitLabel">
+                    {% if profile_form.initial.unit_preference == "imperial" %}
+                    in
+                    {% else %}
+                    cm
+                    {% endif %}
+                </span>
+                </div>
+            </div>
+
+            <small class="text-muted">
+                Metric = kg, cm, km &nbsp;|&nbsp; Imperial = lbs, inches, miles
+            </small>
+            </div> -->
+
+            <div class="mb-4">
+                <h5 class="mb-3">Personal Info</h5>
+
+                <!-- AGE -->
+                <div class="mb-3">
+                    {{ profile_form.age.label_tag }}
+                    {{ profile_form.age }}
+                </div>
+
+                <!-- ========================= -->
+                <!--   WEIGHT with unit toggle -->
+                <!-- ========================= -->
+
+                {{ profile_form.weight_unit_preference }} <!-- hidden field -->
+
+                <label class="form-label fw-semibold">Weight</label>
+                <div class="d-flex align-items-center gap-2 mb-3" style="max-width: 350px;">
+
+                    <!-- Weight input -->
+                    <input 
+                        type="number"
+                        step="0.1"
+                        class="form-control"
+                        id="weightInput"
+                        name="weight"
+                        value="{{ profile_form.weight.value }}"
+                    >
+
+                    <!-- Unit label -->
+                    <span id="weightUnitLabel" class="badge bg-light text-dark border">
+                        {% if profile_form.initial.weight_unit_preference == 'lbs' %}
+                            lbs
+                        {% else %}
+                            kg
+                        {% endif %}
+                    </span>
+
+                    <!-- Toggle switch -->
+                    <div class="form-check form-switch ms-auto">
+                        <input class="form-check-input" type="checkbox" id="weightToggle"
+                            {% if profile_form.initial.weight_unit_preference == 'lbs' %}checked{% endif %}>
+                        <label class="form-check-label small" for="weightToggle">
+                            lbs
+                        </label>
+                    </div>
+                </div>
+
+
+                <!-- ========================= -->
+                <!-- HEIGHT with ft/in toggle  -->
+                <!-- ========================= -->
+
+                {{ profile_form.height_unit_preference }} <!-- hidden -->
+
+                <label class="form-label fw-semibold">Height</label>
+
+                <div id="heightMetricBlock"
+                    class="{% if profile_form.initial.height_unit_preference == 'ft_in' %}d-none{% endif %}"
+                    style="max-width: 350px;">
+                    <!-- cm input -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <input 
+                            type="number"
+                            step="0.1"
+                            class="form-control"
+                            id="heightInputCM"
+                            name="height"
+                            value="{{ profile_form.height.value }}"
+                        >
+
+                        <span class="badge bg-light text-dark border">cm</span>
+
+                        <div class="form-check form-switch ms-auto">
+                            <input class="form-check-input" type="checkbox" id="heightToggle"
+                                {% if profile_form.initial.height_unit_preference == 'ft_in' %}checked{% endif %}>
+                            <label class="form-check-label small" for="heightToggle">ft/in</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Height feet/inches block -->
+                <div id="heightImperialBlock"
+                    class="{% if profile_form.initial.height_unit_preference != 'ft_in' %}d-none{% endif %}"
+                    style="max-width: 350px;">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <input 
+                            type="number"
+                            min="0"
+                            class="form-control"
+                            id="heightFeet"
+                            name="height_feet"
+                            placeholder="ft"
+                            value="{{ height_feet }}"
+                        >
+                        <span class="badge bg-light text-dark border">ft</span>
+
+                        <input 
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            class="form-control"
+                            id="heightInches"
+                            name="height_inches"
+                            placeholder="in"
+                            value="{{ height_inches }}"
+                        >
+                        <span class="badge bg-light text-dark border">in</span>
+
+                        <div class="form-check form-switch ms-auto">
+                            <input class="form-check-input" type="checkbox" id="heightToggle2"
+                                {% if profile_form.initial.height_unit_preference == 'ft_in' %}checked{% endif %}>
+                            <label class="form-check-label small" for="heightToggle2">ft/in</label>
+                        </div>
+                    </div>
+                </div>
+
+                <small class="text-muted d-block mt-1">
+                    Weight uses independent units (kg/lbs). Height can be cm or feet/inches.
+                </small>
+
             </div>
 
             <div class="d-flex gap-2">
@@ -94,4 +284,165 @@
         color: #2d3748;
     }
 </style>
+
+<!-- <script>
+document.addEventListener("DOMContentLoaded", function () {
+  const toggle = document.getElementById("unitToggle");
+  const unitHidden = document.getElementById("id_unit_preference");
+  const weightInput = document.getElementById("id_weight");
+  const heightInput = document.getElementById("id_height");
+  const weightUnitLabel = document.getElementById("weightUnitLabel");
+  const heightUnitLabel = document.getElementById("heightUnitLabel");
+  const toggleLabel = document.getElementById("unitToggleLabel");
+
+  function toNumberOrNull(el) {
+    const val = el.value.trim();
+    if (val === "") return null;
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+  }
+
+  toggle.addEventListener("change", function () {
+    const goingToImperial = toggle.checked;
+
+    let weight = toNumberOrNull(weightInput);
+    let height = toNumberOrNull(heightInput);
+
+    if (goingToImperial) {
+      // metric → imperial
+      if (weight !== null) {
+        weight = weight * 2.20462;       // kg → lbs
+        weightInput.value = weight.toFixed(1);
+      }
+      if (height !== null) {
+        height = height / 2.54;          // cm → in
+        heightInput.value = height.toFixed(1);
+      }
+      unitHidden.value = "imperial";
+      weightUnitLabel.textContent = "lbs";
+      heightUnitLabel.textContent = "in";
+      toggleLabel.textContent = "Imperial";
+    } else {
+      // imperial → metric
+      if (weight !== null) {
+        weight = weight / 2.20462;       // lbs → kg
+        weightInput.value = weight.toFixed(1);
+      }
+      if (height !== null) {
+        height = height * 2.54;          // in → cm
+        heightInput.value = height.toFixed(1);
+      }
+      unitHidden.value = "metric";
+      weightUnitLabel.textContent = "kg";
+      heightUnitLabel.textContent = "cm";
+      toggleLabel.textContent = "Metric";
+    }
+  });
+});
+</script> -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // -------------------------------
+    // WEIGHT TOGGLE
+    // -------------------------------
+
+    const weightToggle = document.getElementById("weightToggle");
+    const weightInput = document.getElementById("weightInput");
+    const weightUnit = document.getElementById("weightUnitLabel");
+    const hiddenWeightUnit = document.getElementById("id_weight_unit_preference");
+
+    function toNum(x) {
+        if (!x) return null;
+        let v = parseFloat(x);
+        return isNaN(v) ? null : v;
+    }
+
+    weightToggle.addEventListener("change", () => {
+        let w = toNum(weightInput.value);
+
+        if (weightToggle.checked) {
+            // kg → lbs
+            if (w !== null) weightInput.value = (w * 2.20462).toFixed(1);
+            weightUnit.textContent = "lbs";
+            hiddenWeightUnit.value = "lbs";
+        } else {
+            // lbs → kg
+            if (w !== null) weightInput.value = (w / 2.20462).toFixed(1);
+            weightUnit.textContent = "kg";
+            hiddenWeightUnit.value = "kg";
+        }
+    });
+
+
+    // -------------------------------
+    // HEIGHT TOGGLE (cm ↔ ft/in)
+    // -------------------------------
+
+    const heightToggle = document.getElementById("heightToggle");
+    const heightToggle2 = document.getElementById("heightToggle2");
+
+    const heightCMBlock = document.getElementById("heightMetricBlock");
+    const heightFTBlock = document.getElementById("heightImperialBlock");
+
+    const heightInputCM = document.getElementById("heightInputCM");
+    const heightFeet = document.getElementById("heightFeet");
+    const heightInches = document.getElementById("heightInches");
+    const hiddenHeightUnit = document.getElementById("id_height_unit_preference");
+
+    function cmToFeetInches(cm) {
+        let totalInches = cm * 0.3937007874;
+        let feet = Math.floor(totalInches / 12);
+        let inches = (totalInches - feet * 12).toFixed(1);
+        return [feet, inches];
+    }
+
+    function feetInchesToCM(feet, inches) {
+        return (feet * 30.48) + (inches * 2.54);
+    }
+
+    function applyHeightToggle(enableImperial) {
+        if (enableImperial) {
+            // cm → ft/in
+            let cm = toNum(heightInputCM.value);
+            if (cm !== null) {
+                let [ft, inch] = cmToFeetInches(cm);
+                heightFeet.value = ft;
+                heightInches.value = inch;
+            }
+
+            heightCMBlock.classList.add("d-none");
+            heightFTBlock.classList.remove("d-none");
+
+            hiddenHeightUnit.value = "ft_in";
+
+            heightToggle2.checked = true;
+
+        } else {
+            // ft/in → cm
+            let ft = parseFloat(heightFeet.value) || 0;
+            let inch = parseFloat(heightInches.value) || 0;
+
+            heightInputCM.value = feetInchesToCM(ft, inch).toFixed(1);
+
+            heightFTBlock.classList.add("d-none");
+            heightCMBlock.classList.remove("d-none");
+
+            hiddenHeightUnit.value = "cm";
+
+            heightToggle.checked = false;
+        }
+    }
+
+    heightToggle.addEventListener("change", () => {
+        applyHeightToggle(heightToggle.checked);
+    });
+
+    heightToggle2.addEventListener("change", () => {
+        applyHeightToggle(heightToggle2.checked);
+    });
+});
+</script>
+
 {% endblock %}
