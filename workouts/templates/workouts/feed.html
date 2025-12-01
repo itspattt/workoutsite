@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Public Feed{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">🏆 Community Feed</h1>
+
+    {% for post in posts %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="text-muted">Posted by {{ post.user.username }} on {{ post.created_at|date:"M d, Y" }}</h6>
+
+            <p class="mt-2">{{ post.message }}</p>
+
+            {% if post.workout %}
+            <div class="alert alert-info">
+                <strong>Shared Workout:</strong> 
+                <a href="{% url 'public_workout_detail' post.workout.pk %}">
+                    {{ post.workout.title }}
+                </a>
+                {% if post.user == request.user %}
+                <div class="text-end">
+                    <a href="{% url 'edit_feed_post' post.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'delete_feed_post' post.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if posts|length == 0 %}
+    <div class="text-center py-5">
+        <p class="text-muted">No posts yet. Be the first to share an achievement!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

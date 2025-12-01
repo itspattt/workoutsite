@@ -77,3 +77,28 @@ class WorkoutRoute(models.Model):
         """Return the number of GPS points in the route"""
         return len(self.route_data) if self.route_data else 0
 
+    
+class AchievementPost(models.Model):
+    """
+    A post that appears on the public feed.
+    Users can share workouts or manually post achievements.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="achievement_posts")
+    workout = models.ForeignKey(
+        Workout,
+        on_delete=models.CASCADE,   # delete post if workout is deleted
+        related_name="shared_posts"
+    )
+    
+    message = models.TextField(max_length=500, help_text="What do you want to share?")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Achievement by {self.user.username} on {self.created_at.strftime('%Y-%m-%d')}"
+    
+
+    

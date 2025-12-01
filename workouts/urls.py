@@ -18,4 +18,14 @@ urlpatterns = [
 
     # Data endpoint for charts
     path('progress/data/', views.progress_data, name='progress_data'),
+
+    # Feed (Achievement Posts)
+    path("feed/", views.feed_view, name="feed"),
+    path("feed/new/<int:workout_id>/", views.create_feed_post, name="create_feed_post"),
+    # Achievement editing
+    path("feed/edit/<int:post_id>/", views.edit_feed_post, name="edit_feed_post"),
+    path("feed/delete/<int:post_id>/", views.delete_feed_post, name="delete_feed_post"),
+
+    # Public shared workout view
+    path('shared/<int:pk>/', views.public_workout_detail, name='public_workout_detail'),
 ]

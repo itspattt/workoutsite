@@ -1,15 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.models import User
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
-from .models import Workout, WorkoutRoute
+from .models import Workout, WorkoutRoute, AchievementPost
 from .forms import WorkoutForm, WorkoutRouteForm
 import json
-
 
 @login_required
 def workout_list(request):
@@ -190,10 +189,14 @@ def progress_data(request):
     calories = [w.calories or 0 for w in workouts]
     distance = [float(w.distance) if w.distance else 0 for w in workouts]
 
-    # Workout type distribution
-    type_counts = workouts.values('workout_type').annotate(total=Count('id'))
-    type_labels = [t['workout_type'] for t in type_counts]
-    type_values = [t['total'] for t in type_counts]
+    type_counts = (
+        workouts.values('workout_type')
+                .annotate(total=Count('id'))
+                .order_by('workout_type')
+    )
+
+    type_labels = [item['workout_type'] for item in type_counts]
+    type_values = [item['total'] for item in type_counts]
 
     return JsonResponse({
         "dates": dates,
@@ -202,4 +205,155 @@ def progress_data(request):
         "distance": distance,
         "type_labels": type_labels,
         "type_values": type_values,
+    })
+
+@login_required
+def feed_view(request):
+    """
+    Public feed showing all user achievements.
+    """
+    posts = AchievementPost.objects.select_related("user", "workout")
+    return render(request, "workouts/feed.html", {"posts": posts})
+
+# @login_required
+# def create_feed_post(request, workout_id=None):
+    """
+    Create a new achievement post, optionally tied to a workout.
+    """
+    workout = None
+
+    if workout_id:
+        workout = get_object_or_404(Workout, pk=workout_id, user=request.user)
+
+        # ⭐ Prevent duplicate sharing
+        already_shared = AchievementPost.objects.filter(
+            user=request.user, workout=workout
+        ).exists()
+
+        if already_shared:
+            messages.error(request, "You have already shared this workout.")
+            return redirect('public_workout_detail', workout.pk)
+
+    if request.method == "POST":
+        message = request.POST.get("message")
+
+        if not message:
+            messages.error(request, "Message cannot be empty.")
+            return redirect(request.path)
+
+        AchievementPost.objects.create(
+            user=request.user,
+            workout=workout,
+            message=message
+        )
+
+        messages.success(request, "Achievement posted to feed!")
+        return redirect("feed")
+
+    return render(request, "workouts/create_feed_post.html", {
+        "workout": workout
+    })
+
+@login_required
+def create_feed_post(request, workout_id):
+    """
+    Create a new achievement post tied to a specific workout.
+    Users cannot create posts unrelated to workouts.
+    """
+    workout = get_object_or_404(Workout, pk=workout_id, user=request.user)
+
+    # Prevent duplicate sharing
+    already_shared = AchievementPost.objects.filter(
+        user=request.user, workout=workout
+    ).exists()
+
+    if already_shared:
+        messages.error(request, "You have already shared this workout.")
+        return redirect('public_workout_detail', workout.pk)
+
+    if request.method == "POST":
+        message = request.POST.get("message")
+
+        if not message:
+            messages.error(request, "Message cannot be empty.")
+            return redirect(request.path)
+
+        AchievementPost.objects.create(
+            user=request.user,
+            workout=workout,
+            message=message
+        )
+
+        messages.success(request, "Achievement posted to feed!")
+        return redirect("feed")
+
+    return render(request, "workouts/create_feed_post.html", {
+        "workout": workout
+    })
+
+@login_required
+def public_workout_detail(request, pk):
+    """
+    Public-safe view of a workout shared through the feed.
+    Anyone can view this if the workout is associated with an AchievementPost.
+    """
+    workout = get_object_or_404(Workout, pk=pk)
+
+    # Check if this workout was shared publicly
+    is_shared = workout.shared_posts.exists()
+
+    if not workout.shared_posts.exists() and not request.user.is_staff:
+        # Do NOT leak existence or privacy — return 404
+        raise Http404("Workout not shared publicly")
+
+    has_route = hasattr(workout, 'route')
+
+    # Determine if current user owns the workout
+    is_owner = (workout.user == request.user)
+
+    return render(request, "workouts/public_workout_detail.html", {
+        "workout": workout,
+        "has_route": has_route,
+        "is_owner": is_owner,  # Used to show edit buttons only for owner
+    })
+
+@login_required
+def edit_feed_post(request, post_id):
+    post = get_object_or_404(AchievementPost, pk=post_id)
+
+    # Only post owner can edit
+    if post.user != request.user:
+        raise Http404("You are not allowed to edit this post.")
+
+    if request.method == "POST":
+        message = request.POST.get("message")
+
+        if not message:
+            messages.error(request, "Message cannot be empty.")
+            return redirect(request.path)
+
+        post.message = message
+        post.save()
+        messages.success(request, "Achievement updated!")
+        return redirect("feed")
+
+    return render(request, "workouts/edit_feed_post.html", {
+        "post": post
+    })
+
+@login_required
+def delete_feed_post(request, post_id):
+    post = get_object_or_404(AchievementPost, pk=post_id)
+
+    # Only owner can delete
+    if post.user != request.user:
+        raise Http404("You are not allowed to delete this post.")
+
+    if request.method == "POST":
+        post.delete()
+        messages.success(request, "Achievement deleted.")
+        return redirect("feed")
+
+    return render(request, "workouts/delete_feed_post.html", {
+        "post": post
     })

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Share Workout Achievement{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">Share Workout Achievement</h2>
+
+    <!-- Always required, since users can only post from a workout -->
+    <div class="alert alert-info">
+        Sharing workout: <strong>{{ workout.title }}</strong>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <label class="form-label">Add a Message</label>
+
+        <textarea name="message" 
+                  class="form-control" 
+                  rows="4" 
+                  placeholder="What did you achieve? (e.g., Longest run, new PR, tough session)"
+                  required></textarea>
+
+        <button class="btn btn-success mt-3">
+            Share to Feed ⭐
+        </button>
+    </form>
+</div>
+{% endblock %}

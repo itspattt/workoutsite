@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Edit Achievement{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2>Edit Achievement</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <textarea name="message" class="form-control" rows="4" required>{{ post.message }}</textarea>
+
+        <button class="btn btn-primary mt-3">Save Changes</button>
+        <a href="{% url 'feed' %}" class="btn btn-secondary mt-3">Cancel</a>
+    </form>
+</div>
+{% endblock %}

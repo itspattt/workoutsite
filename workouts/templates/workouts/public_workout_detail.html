@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workout.title }} - Shared Workout{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="mb-2">{{ workout.title }}</h2>
+                        <span class="badge bg-primary">
+                            {{ workout.get_workout_type_display }}
+                        </span>
+                        <p class="text-muted mt-2">
+                            Shared by <strong>{{ workout.user.username }}</strong>
+                        </p>
+                    </div>
+
+                    {% if is_owner %}
+                    <div>
+                        <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
+                        <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="text-muted mb-4">
+                    <strong>Date:</strong> {{ workout.workout_date|date:"F d, Y - g:i A" }}
+                </p>
+
+                {% if workout.description %}
+                <div class="mb-4">
+                    <h5>Notes</h5>
+                    <p>{{ workout.description }}</p>
+                </div>
+                {% endif %}
+
+                {% if has_route %}
+                <div class="mb-4">
+                    <h5>Workout Route</h5>
+                    <div id="map"></div>
+
+                    {% if workout.route.start_location or workout.route.end_location %}
+                    <div class="mt-3">
+                        {% if workout.route.start_location %}
+                            <p><strong>Start:</strong> {{ workout.route.start_location }}</p>
+                        {% endif %}
+                        {% if workout.route.end_location %}
+                            <p><strong>End:</strong> {{ workout.route.end_location }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Duration</h6>
+                <div class="metric-value text-primary">{{ workout.duration }}</div>
+                <div class="text-muted">minutes</div>
+            </div>
+        </div>
+
+        {% if workout.distance %}
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Distance</h6>
+                <div class="metric-value text-success">{{ workout.distance }}</div>
+                <div class="text-muted">km</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if workout.calories %}
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-3">Calories</h6>
+                <div class="metric-value text-danger">{{ workout.calories }}</div>
+                <div class="text-muted">burned</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_route %}
+<script>
+    const routeData = {{ workout.route.route_data|safe }};
+
+    if (routeData && routeData.length > 0) {
+        const centerLat = routeData.reduce((sum, p) => sum + p[0], 0) / routeData.length;
+        const centerLng = routeData.reduce((sum, p) => sum + p[1], 0) / routeData.length;
+
+        const map = L.map('map').setView([centerLat, centerLng], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const polyline = L.polyline(routeData, {
+            color: '#fc5200', weight: 4, opacity: 0.8
+        }).addTo(map);
+
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+    }
+</script>
+{% endif %}
+{% endblock %}

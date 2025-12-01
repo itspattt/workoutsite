@@ -9,9 +9,23 @@
     
     {% if user.is_authenticated %}
         <div class="mt-4">
-            <p class="mb-4">Hello, <strong>{{ user.username }}</strong>! Ready to crush your fitness goals?</p>
-            <a href="{% url 'workout_create' %}" class="btn btn-primary btn-lg me-2">Log Workout</a>
-            <a href="{% url 'workout_list' %}" class="btn btn-secondary btn-lg">View Workouts</a>
+            <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                <a href="{% url 'workout_create' %}" class="btn btn-primary btn-lg">
+                    Log Workout
+                </a>
+
+                <a href="{% url 'workout_list' %}" class="btn btn-secondary btn-lg">
+                    View Workouts
+                </a>
+
+                <a href="{% url 'feed' %}" class="btn btn-success btn-lg">
+                    🌍 Community Feed
+                </a>
+
+                <a href="{% url 'progress_dashboard' %}" class="btn btn-outline-info btn-lg">
+                    📈 Progress Dashboard
+                </a>
+            </div>
         </div>
     {% else %}
         <div class="mt-4">

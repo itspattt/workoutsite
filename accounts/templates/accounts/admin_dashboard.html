@@ -222,7 +222,7 @@
                         {% for route in top_routes %}
                         <tr>
                             <td>
-                                <a href="{% url 'workout_detail' route.workout.pk %}">
+                                <a href="{% url 'public_workout_detail' route.workout.pk %}">
                                     {{ route.workout.title }}
                                 </a>
                             </td>
@@ -267,7 +267,7 @@
                         <tr>
                             <td>{{ workout.user.username }}</td>
                             <td>
-                                <a href="{% url 'workout_detail' workout.pk %}">
+                                <a href="{% url 'public_workout_detail' workout.pk %}">
                                     {{ workout.title }}
                                 </a>
                             </td>
