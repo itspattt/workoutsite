@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress - Workout Tracker{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">📈 My Fitness Progress</h1>
+
+    <div class="row g-4">
+
+        <!-- Distance Over Time -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Distance Over Time (km)</h5>
+                    <canvas id="distanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calories Over Time -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Calories Burned Over Time</h5>
+                    <canvas id="calorieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Duration Over Time -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Workout Duration Trend (mins)</h5>
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workout Type Distribution -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Workout Type Breakdown</h5>
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+fetch("{% url 'progress_data' %}")
+    .then(response => response.json())
+    .then(data => {
+
+        // Distance chart
+        new Chart(document.getElementById("distanceChart"), {
+            type: "line",
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: "Distance (km)",
+                    data: data.distance,
+                    borderColor: "blue",
+                    fill: false
+                }]
+            }
+        });
+
+        // Calories chart
+        new Chart(document.getElementById("calorieChart"), {
+            type: "line",
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: "Calories",
+                    data: data.calories,
+                    borderColor: "red",
+                    fill: false
+                }]
+            }
+        });
+
+        // Duration chart
+        new Chart(document.getElementById("durationChart"), {
+            type: "line",
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: "Duration (minutes)",
+                    data: data.duration,
+                    borderColor: "green",
+                    fill: false
+                }]
+            }
+        });
+
+        // Workout type distribution
+        new Chart(document.getElementById("typeChart"), {
+            type: "pie",
+            data: {
+                labels: data.type_labels,
+                datasets: [{
+                    data: data.type_values,
+                    backgroundColor: ["#36a2eb", "#ff6384", "#ffce56", "#4bc0c0", "#9966ff", "#ff9f40"]
+                }]
+            }
+        });
+    });
+</script>
+{% endblock %}

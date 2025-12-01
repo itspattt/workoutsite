@@ -12,5 +12,10 @@ urlpatterns = [
     # Route management
     path('workout/<int:pk>/route/', views.workout_add_route, name='workout_add_route'),
     path('workout/<int:pk>/route/delete/', views.workout_route_delete, name='workout_route_delete'),
-]
 
+    # Progress dashboard
+    path('progress/', views.progress_dashboard, name='progress_dashboard'),
+
+    # Data endpoint for charts
+    path('progress/data/', views.progress_data, name='progress_data'),
+]

@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from django.db.models import Sum, Count
+from django.utils import timezone
+from datetime import timedelta
 from .models import Workout, WorkoutRoute
 from .forms import WorkoutForm, WorkoutRouteForm
 import json
@@ -164,4 +167,39 @@ def workout_route_delete(request, pk):
     return render(request, 'workouts/workout_route_confirm_delete.html', {
         'workout': workout,
         'route': route
+    })
+
+@login_required
+def progress_dashboard(request):
+    """
+    Displays the progress dashboard with charts.
+    """
+    return render(request, 'workouts/progress_dashboard.html')
+
+@login_required
+def progress_data(request):
+    """
+    Returns aggregated workout data for charts in JSON format.
+    """
+
+    workouts = Workout.objects.filter(user=request.user).order_by('workout_date')
+
+    # Line chart data
+    dates = [w.workout_date.strftime("%Y-%m-%d") for w in workouts]
+    duration = [w.duration for w in workouts]
+    calories = [w.calories or 0 for w in workouts]
+    distance = [float(w.distance) if w.distance else 0 for w in workouts]
+
+    # Workout type distribution
+    type_counts = workouts.values('workout_type').annotate(total=Count('id'))
+    type_labels = [t['workout_type'] for t in type_counts]
+    type_values = [t['total'] for t in type_counts]
+
+    return JsonResponse({
+        "dates": dates,
+        "duration": duration,
+        "calories": calories,
+        "distance": distance,
+        "type_labels": type_labels,
+        "type_values": type_values,
     })
