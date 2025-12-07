@@ -100,5 +100,3 @@ class AchievementPost(models.Model):
     def __str__(self):
         return f"Achievement by {self.user.username} on {self.created_at.strftime('%Y-%m-%d')}"
     
-
-    

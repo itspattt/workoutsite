@@ -1,31 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Public Feed{% endblock %}
+{% block title %}Community Feed{% endblock %}
 
 {% block content %}
 <div class="container my-4">
     <h1 class="mb-4">🏆 Community Feed</h1>
 
     {% for post in posts %}
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <h6 class="text-muted">Posted by {{ post.user.username }} on {{ post.created_at|date:"M d, Y" }}</h6>
 
-            <p class="mt-2">{{ post.message }}</p>
-
-            {% if post.workout %}
-            <div class="alert alert-info">
-                <strong>Shared Workout:</strong> 
-                <a href="{% url 'public_workout_detail' post.workout.pk %}">
-                    {{ post.workout.title }}
-                </a>
-                {% if post.user == request.user %}
-                <div class="text-end">
-                    <a href="{% url 'edit_feed_post' post.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <a href="{% url 'delete_feed_post' post.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            <!-- Workout Type + User Info -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <span class="badge bg-primary">
+                        {{ post.workout.get_workout_type_display }}
+                    </span>
+                    <span class="text-muted ms-2">
+                        by <strong>{{ post.user.username }}</strong> • {{ post.created_at|date:"M d, Y" }}
+                    </span>
                 </div>
-                {% endif %}
+            </div>
+
+            <!-- Message with Show More -->
+            <p class="feed-message mb-3"
+            data-fulltext="{{ post.message }}"
+            data-shorttext="{{ post.message|truncatechars:120 }}"
+            style="max-height: 70px; overflow: hidden;">
+            {{ post.message|truncatechars:120 }}
+            </p>
+
+            {% if post.message|length > 120 %}
+            <button class="btn btn-link p-0 toggle-btn">Show more</button>
+            {% endif %}
+
+            <!-- Workout Link -->
+            <div class="mb-3">
+                <a href="{% url 'public_workout_detail' post.workout.pk %}" class="btn btn-outline-info btn-sm">
+                    View Shared Workout →
+                </a>
+            </div>
+
+            <!-- Owner Controls -->
+            {% if post.user == request.user %}
+            <div class="text-end">
+                <a href="{% url 'edit_feed_post' post.pk %}" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </a>
+                <a href="{% url 'delete_feed_post' post.pk %}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Delete
+                </a>
             </div>
             {% endif %}
+
         </div>
     </div>
     {% endfor %}
@@ -36,4 +62,28 @@
     </div>
     {% endif %}
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const messageEl = this.previousElementSibling;
+
+        const full = messageEl.getAttribute("data-fulltext");
+        const short = messageEl.getAttribute("data-shorttext");
+
+        if (this.textContent.trim() === "Show more") {
+            messageEl.textContent = full;
+            messageEl.style.maxHeight = "none";
+            this.textContent = "Show less";
+        } else {
+            messageEl.textContent = short;
+            messageEl.style.maxHeight = "70px";
+            this.textContent = "Show more";
+        }
+    });
+});
+</script>
 {% endblock %}

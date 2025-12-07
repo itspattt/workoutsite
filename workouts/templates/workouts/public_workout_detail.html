@@ -8,7 +8,7 @@
         <div class="card mb-4">
             <div class="card-body">
 
-                <div class="d-flex justify-content-between align-items-start mb-3">
+                <!-- <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h2 class="mb-2">{{ workout.title }}</h2>
                         <span class="badge bg-primary">
@@ -21,12 +21,52 @@
 
                     {% if is_owner %}
                     <div>
-                        <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
-                        <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                        <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+                        <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
                     </div>
                     {% endif %}
-                </div>
 
+                </div> -->
+
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="mb-2">{{ workout.title }}</h2>
+                        <span class="badge bg-primary">
+                            {{ workout.get_workout_type_display }}
+                        </span>
+                        <p class="text-muted mt-2">
+                            Shared by <strong>{{ workout.user.username }}</strong>
+                        </p>
+                    </div>
+
+                    <div class="text-end">
+
+                        <!-- Copy Link Button (visible to everyone) -->
+                        <button class="btn btn-outline-secondary btn-sm mb-2" id="share-btn">
+                            <i class="bi bi-link-45deg"></i> Copy Link
+                        </button>
+                        <br>
+                        <small id="share-feedback" class="text-success" style="display:none;">Link copied!</small>
+
+                        <!-- Owner-only buttons -->
+                        {% if is_owner %}
+                        <div class="mt-2">
+                            <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm me-1">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+                
                 <p class="text-muted mb-4">
                     <strong>Date:</strong> {{ workout.workout_date|date:"F d, Y - g:i A" }}
                 </p>
@@ -114,4 +154,17 @@
     }
 </script>
 {% endif %}
+
+<script>
+document.getElementById("share-btn").addEventListener("click", function () {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        const feedback = document.getElementById("share-feedback");
+        feedback.style.display = "inline";
+
+        setTimeout(() => {
+            feedback.style.display = "none";
+        }, 2000);
+    });
+});
+</script>
 {% endblock %}

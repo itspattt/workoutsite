@@ -16,13 +16,13 @@
                     </div>
                     <div>
                         <a href="{% url 'workout_edit' workout.pk %}" class="btn btn-outline-primary btn-sm">
-                            Edit
+                            <i class="bi bi-pencil-square"></i> Edit
                         </a>
                         <a href="{% url 'workout_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
-                            Delete
+                            <i class="bi bi-trash"></i> Delete
                         </a>
                         <a href="{% url 'create_feed_post' workout.pk %}" class="btn btn-success btn-sm">
-                            Share to Feed ⭐
+                            <i class="bi bi-share"></i> Share to Feed
                         </a>
                     </div>
                 </div>
@@ -45,10 +45,10 @@
                             <h5 class="mb-0">Workout Route</h5>
                             <div>
                                 <a href="{% url 'workout_add_route' workout.pk %}" class="btn btn-outline-primary btn-sm">
-                                    Edit Route
+                                    <i class="bi bi-pencil-square"></i> Edit Route
                                 </a>
                                 <a href="{% url 'workout_route_delete' workout.pk %}" class="btn btn-outline-danger btn-sm">
-                                    Delete Route
+                                    <i class="bi bi-trash"></i> Delete Route
                                 </a>
                             </div>
                         </div>
