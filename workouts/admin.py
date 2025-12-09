@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Workout, WorkoutRoute, AchievementPost, Like, Comment, WorkoutWeather
+from .models import Workout, WorkoutRoute, AchievementPost, Like, Comment, WorkoutWeather, Milestone, UserMilestone
 
 
 @admin.register(Workout)
@@ -44,3 +44,5 @@ class WorkoutWeatherAdmin(admin.ModelAdmin):
     list_filter = ['weather_condition', 'created_at']
     search_fields = ['workout__title', 'weather_condition']
 
+admin.site.register(Milestone)
+admin.site.register(UserMilestone)

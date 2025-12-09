@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Milestones{% endblock %}
+
+{% block content %}
+<h1>Your Fitness Milestones</h1>
+
+<div class="row">
+  {% for m in milestones %}
+    <div class="col-md-4 mb-3">
+      <div class="card {% if m.unlocked %}border-success{% else %}border-secondary{% endif %}">
+        <div class="card-body text-center">
+          <h5 class="card-title">
+            {% if m.unlocked %}🏆{% else %}🔒{% endif %} {{ m.name }}
+          </h5>
+          <p class="card-text">{{ m.description }}</p>
+          <p class="text-muted small">
+            {% if m.type == 'count' %}Requires {{ m.threshold }} workouts{% endif %}
+            {% if m.type == 'distance' %}Requires {{ m.threshold }} km total{% endif %}
+            {% if m.type == 'duration' %}Requires {{ m.threshold }} minutes{% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

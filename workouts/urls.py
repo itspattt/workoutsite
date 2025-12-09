@@ -22,18 +22,13 @@ urlpatterns = [
     # Feed (Achievement Posts)
     path("feed/", views.feed_view, name="feed"),
     path("feed/new/<int:workout_id>/", views.create_feed_post, name="create_feed_post"),
-    # Achievement editing
     path("feed/edit/<int:post_id>/", views.edit_feed_post, name="edit_feed_post"),
     path("feed/delete/<int:post_id>/", views.delete_feed_post, name="delete_feed_post"),
-
-    # Public shared workout view
     path('shared/<int:pk>/', views.public_workout_detail, name='public_workout_detail'),
-    
-    # Like and comment functionality
     path('post/<int:post_id>/like/', views.toggle_like, name='toggle_like'),
     path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
     path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
-    
-    # Weather functionality
     path('workout/<int:workout_id>/fetch-weather/', views.fetch_weather, name='fetch_weather'),
+
+    path('workout/notifications/', views.milestones, name="notifications"),
 ]

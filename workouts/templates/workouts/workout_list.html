@@ -11,55 +11,73 @@
 </div>
 
 {% if workouts %}
-    <div class="row">
-        {% for workout in workouts %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">{{ workout.title }}</h5>
-                            <span class="badge bg-primary workout-type-badge">
-                                {{ workout.get_workout_type_display }}
-                            </span>
+
+    {# Group workouts by workout_date.date #}
+    {% regroup workouts by workout_date.date as workouts_by_date %}
+
+    <div class="timeline">
+
+        {% for group in workouts_by_date %}
+            <!-- Timeline Date Header -->
+            <h3 class="mt-4 mb-3 border-bottom pb-2">
+                {{ group.grouper|date:"M d, Y" }}
+            </h3>
+
+            <div class="row mb-4">
+                {% for workout in group.list %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">{{ workout.title }}</h5>
+                                    <span class="badge bg-primary workout-type-badge">
+                                        {{ workout.get_workout_type_display }}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-muted small mb-3">
+                                    {{ workout.workout_date|date:"g:i A" }}  {# time only #}
+                                </p>
+                                
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <strong class="d-block">{{ workout.duration }}</strong>
+                                        <small class="text-muted">mins</small>
+                                    </div>
+                                    {% if workout.distance %}
+                                    <div class="col-4">
+                                        <strong class="d-block">{{ workout.distance }}</strong>
+                                        <small class="text-muted">km</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if workout.calories %}
+                                    <div class="col-4">
+                                        <strong class="d-block">{{ workout.calories }}</strong>
+                                        <small class="text-muted">cal</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if workout.route %}
+                                    <span class="badge bg-success mb-2">
+                                        📍 Has Route ({{ workout.route.total_points }} points)
+                                    </span>
+                                {% endif %}
+                                
+                                <a href="{% url 'workout_detail' workout.pk %}" 
+                                   class="btn btn-sm btn-outline-primary w-100 mt-2">
+                                    View Details
+                                </a>
+                            </div>
                         </div>
-                        
-                        <p class="text-muted small mb-3">
-                            {{ workout.workout_date|date:"M d, Y - g:i A" }}
-                        </p>
-                        
-                        <div class="row text-center mb-3">
-                            <div class="col-4">
-                                <strong class="d-block">{{ workout.duration }}</strong>
-                                <small class="text-muted">mins</small>
-                            </div>
-                            {% if workout.distance %}
-                            <div class="col-4">
-                                <strong class="d-block">{{ workout.distance }}</strong>
-                                <small class="text-muted">km</small>
-                            </div>
-                            {% endif %}
-                            {% if workout.calories %}
-                            <div class="col-4">
-                                <strong class="d-block">{{ workout.calories }}</strong>
-                                <small class="text-muted">cal</small>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        {% if workout.route %}
-                            <span class="badge bg-success mb-2">
-                                📍 Has Route ({{ workout.route.total_points }} points)
-                            </span>
-                        {% endif %}
-                        
-                        <a href="{% url 'workout_detail' workout.pk %}" class="btn btn-sm btn-outline-primary w-100 mt-2">
-                            View Details
-                        </a>
                     </div>
-                </div>
+                {% endfor %}
             </div>
+
         {% endfor %}
+
     </div>
+
 {% else %}
     <div class="text-center py-5">
         <h3 class="text-muted mb-4">No workouts logged yet</h3>
@@ -70,4 +88,3 @@
     </div>
 {% endif %}
 {% endblock %}
-

@@ -160,3 +160,21 @@ class WorkoutWeather(models.Model):
     def __str__(self):
         return f"Weather for {self.workout.title}: {self.temperature}°C, {self.weather_condition}"
     
+
+class Milestone(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    milestone_type = models.CharField(max_length=50)
+    threshold = models.FloatField()
+
+    def __str__(self):
+        return self.name
+    
+class UserMilestone(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
+    achieved_at = models.DateTimeField(auto_now_add=True)
+    seen = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'milestone')

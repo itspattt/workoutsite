@@ -6,18 +6,20 @@ from django.contrib.auth.models import User
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
-from .models import Workout, WorkoutRoute, AchievementPost, Like, Comment, WorkoutWeather
+from .models import Workout, WorkoutRoute, AchievementPost, Like, Comment, WorkoutWeather, Milestone, UserMilestone
 from .forms import WorkoutForm, WorkoutRouteForm
 import json
 import requests
 from django.conf import settings
+from .utils import check_milestones
 
 @login_required
 def workout_list(request):
     """
     Display list of all workouts for the logged-in user.
     """
-    workouts = Workout.objects.filter(user=request.user)
+    workouts = Workout.objects.filter(user=request.user).order_by('-workout_date')
+
     return render(request, 'workouts/workout_list.html', {
         'workouts': workouts
     })
@@ -50,6 +52,7 @@ def workout_create(request):
             workout.user = request.user
             workout.save()
             messages.success(request, 'Workout logged successfully!')
+            check_milestones(request.user)
             return redirect('workout_detail', pk=workout.pk)
     else:
         form = WorkoutForm()
@@ -487,3 +490,31 @@ def fetch_weather(request, workout_id):
         messages.error(request, f"Invalid weather data received: {str(e)}")
     
     return redirect('workout_detail', pk=workout_id)
+
+
+@login_required
+def milestones(request):
+    user = request.user
+
+    # Get all milestones and mark which are unlocked
+    all_milestones = Milestone.objects.all()
+    unlocked_ids = UserMilestone.objects.filter(user=user).values_list('milestone_id', flat=True)
+
+    # Build a list for template with status
+    milestones_with_status = []
+    for m in all_milestones:
+        milestones_with_status.append({
+            "name": m.name,
+            "description": m.description,
+            "threshold": m.threshold,
+            "type": m.milestone_type,
+            "unlocked": m.id in unlocked_ids
+        })
+
+    context = {
+        "milestones": milestones_with_status
+    }
+
+    UserMilestone.objects.filter(user=request.user, seen=False).update(seen=True)
+
+    return render(request, "workouts/milestones.html", context)
