@@ -40,6 +40,64 @@
                 </a>
             </div>
 
+            <!-- Like and Comment Section -->
+            <div class="border-top pt-3 mb-3">
+                <!-- Like/Comment Counts -->
+                <div class="d-flex gap-3 mb-2 text-muted small">
+                    <span id="like-count-{{ post.pk }}">
+                        <i class="bi bi-heart-fill text-danger"></i> {{ post.like_count }} like{{ post.like_count|pluralize }}
+                    </span>
+                    <span>
+                        <i class="bi bi-chat-fill text-primary"></i> {{ post.comments.count }} comment{{ post.comments.count|pluralize }}
+                    </span>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-outline-danger like-btn" data-post-id="{{ post.pk }}" data-liked="{% if post.user_has_liked %}true{% else %}false{% endif %}">
+                        {% if post.user_has_liked %}
+                            <i class="bi bi-heart-fill"></i> Unlike
+                        {% else %}
+                            <i class="bi bi-heart"></i> Like
+                        {% endif %}
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleCommentForm({{ post.pk }})">
+                        <i class="bi bi-chat"></i> Comment
+                    </button>
+                </div>
+                
+                <!-- Comment Form (Hidden by default) -->
+                <div id="comment-form-{{ post.pk }}" class="mb-3" style="display: none;">
+                    <form class="comment-form" data-post-id="{{ post.pk }}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="comment_text" placeholder="Add a comment..." required>
+                            <button type="submit" class="btn btn-primary">Post</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Comments List -->
+                <div id="comments-{{ post.pk }}" class="comments-list">
+                    {% for comment in post.comments.all %}
+                    <div class="comment-item mb-2 p-2 bg-light rounded" id="comment-{{ comment.pk }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ comment.user.username }}</strong>
+                                <span class="text-muted small">• {{ comment.created_at|date:"M d, Y g:i A" }}</span>
+                                <p class="mb-0 mt-1">{{ comment.text }}</p>
+                            </div>
+                            {% if comment.user == request.user %}
+                            <button class="btn btn-sm btn-link text-danger delete-comment-btn" data-comment-id="{{ comment.pk }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <!-- Owner Controls -->
             {% if post.user == request.user %}
             <div class="text-end">
@@ -67,6 +125,7 @@
 
 {% block extra_js %}
 <script>
+// Toggle "Show more" functionality for post messages
 document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         const messageEl = this.previousElementSibling;
@@ -85,5 +144,147 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
         }
     });
 });
+
+// Toggle comment form visibility
+function toggleCommentForm(postId) {
+    const form = document.getElementById(`comment-form-${postId}`);
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        form.querySelector('input').focus();
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+// Handle like button clicks
+document.querySelectorAll('.like-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const wasLiked = this.dataset.liked === 'true';
+        
+        fetch(`/workouts/post/${postId}/like/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update button
+                if (data.liked) {
+                    this.innerHTML = '<i class="bi bi-heart-fill"></i> Unlike';
+                    this.dataset.liked = 'true';
+                } else {
+                    this.innerHTML = '<i class="bi bi-heart"></i> Like';
+                    this.dataset.liked = 'false';
+                }
+                
+                // Update like count
+                const likeCountEl = document.getElementById(`like-count-${postId}`);
+                const plural = data.like_count !== 1 ? 's' : '';
+                likeCountEl.innerHTML = `<i class="bi bi-heart-fill text-danger"></i> ${data.like_count} like${plural}`;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+
+// Handle comment form submissions
+document.querySelectorAll('.comment-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const postId = this.dataset.postId;
+        const formData = new FormData(this);
+        
+        fetch(`/workouts/post/${postId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new comment to the list
+                const commentsList = document.getElementById(`comments-${postId}`);
+                const commentHTML = `
+                    <div class="comment-item mb-2 p-2 bg-light rounded" id="comment-${data.comment.id}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${data.comment.user}</strong>
+                                <span class="text-muted small">• ${data.comment.created_at}</span>
+                                <p class="mb-0 mt-1">${data.comment.text}</p>
+                            </div>
+                            ${data.comment.is_owner ? `
+                            <button class="btn btn-sm btn-link text-danger delete-comment-btn" data-comment-id="${data.comment.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                commentsList.insertAdjacentHTML('beforeend', commentHTML);
+                
+                // Clear form and hide it
+                this.reset();
+                toggleCommentForm(postId);
+                
+                // Update comment count
+                location.reload(); // Simple reload to update counts
+            } else {
+                alert(data.error || 'Failed to add comment');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+
+// Handle comment deletion
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-comment-btn')) {
+        const btn = e.target.closest('.delete-comment-btn');
+        const commentId = btn.dataset.commentId;
+        
+        if (confirm('Are you sure you want to delete this comment?')) {
+            fetch(`/workouts/comment/${commentId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`comment-${commentId}`).remove();
+                } else {
+                    alert(data.error || 'Failed to delete comment');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+});
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %}

@@ -28,4 +28,12 @@ urlpatterns = [
 
     # Public shared workout view
     path('shared/<int:pk>/', views.public_workout_detail, name='public_workout_detail'),
+    
+    # Like and comment functionality
+    path('post/<int:post_id>/like/', views.toggle_like, name='toggle_like'),
+    path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+    
+    # Weather functionality
+    path('workout/<int:workout_id>/fetch-weather/', views.fetch_weather, name='fetch_weather'),
 ]

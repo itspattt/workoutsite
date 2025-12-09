@@ -6,9 +6,11 @@ from django.contrib.auth.models import User
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
-from .models import Workout, WorkoutRoute, AchievementPost
+from .models import Workout, WorkoutRoute, AchievementPost, Like, Comment, WorkoutWeather
 from .forms import WorkoutForm, WorkoutRouteForm
 import json
+import requests
+from django.conf import settings
 
 @login_required
 def workout_list(request):
@@ -106,7 +108,6 @@ def workout_add_route(request, pk):
     """
     workout = get_object_or_404(Workout, pk=pk, user=request.user)
     
-    # Check if route already exists
     try:
         route = workout.route
         is_edit = True
@@ -183,7 +184,6 @@ def progress_data(request):
 
     workouts = Workout.objects.filter(user=request.user).order_by('workout_date')
 
-    # Line chart data
     dates = [w.workout_date.strftime("%Y-%m-%d") for w in workouts]
     duration = [w.duration for w in workouts]
     calories = [w.calories or 0 for w in workouts]
@@ -209,23 +209,21 @@ def progress_data(request):
 
 @login_required
 def feed_view(request):
-    """
-    Public feed showing all user achievements.
-    """
-    posts = AchievementPost.objects.select_related("user", "workout")
+    posts = AchievementPost.objects.select_related("user", "workout").prefetch_related("likes", "comments__user")
+    
+    # Add is_liked attribute to each post for the current user
+    for post in posts:
+        post.user_has_liked = post.is_liked_by(request.user)
+    
     return render(request, "workouts/feed.html", {"posts": posts})
 
 # @login_required
 # def create_feed_post(request, workout_id=None):
-    """
-    Create a new achievement post, optionally tied to a workout.
-    """
     workout = None
 
     if workout_id:
         workout = get_object_or_404(Workout, pk=workout_id, user=request.user)
 
-        # ⭐ Prevent duplicate sharing
         already_shared = AchievementPost.objects.filter(
             user=request.user, workout=workout
         ).exists()
@@ -256,10 +254,6 @@ def feed_view(request):
 
 @login_required
 def create_feed_post(request, workout_id):
-    """
-    Create a new achievement post tied to a specific workout.
-    Users cannot create posts unrelated to workouts.
-    """
     workout = get_object_or_404(Workout, pk=workout_id, user=request.user)
 
     # Prevent duplicate sharing
@@ -293,35 +287,27 @@ def create_feed_post(request, workout_id):
 
 @login_required
 def public_workout_detail(request, pk):
-    """
-    Public-safe view of a workout shared through the feed.
-    Anyone can view this if the workout is associated with an AchievementPost.
-    """
     workout = get_object_or_404(Workout, pk=pk)
 
-    # Check if this workout was shared publicly
     is_shared = workout.shared_posts.exists()
 
     if not workout.shared_posts.exists() and not request.user.is_staff:
-        # Do NOT leak existence or privacy — return 404
         raise Http404("Workout not shared publicly")
 
     has_route = hasattr(workout, 'route')
 
-    # Determine if current user owns the workout
     is_owner = (workout.user == request.user)
 
     return render(request, "workouts/public_workout_detail.html", {
         "workout": workout,
         "has_route": has_route,
-        "is_owner": is_owner,  # Used to show edit buttons only for owner
+        "is_owner": is_owner, 
     })
 
 @login_required
 def edit_feed_post(request, post_id):
     post = get_object_or_404(AchievementPost, pk=post_id)
 
-    # Only post owner can edit
     if post.user != request.user:
         raise Http404("You are not allowed to edit this post.")
 
@@ -345,7 +331,6 @@ def edit_feed_post(request, post_id):
 def delete_feed_post(request, post_id):
     post = get_object_or_404(AchievementPost, pk=post_id)
 
-    # Only owner can delete
     if post.user != request.user:
         raise Http404("You are not allowed to delete this post.")
 
@@ -357,3 +342,148 @@ def delete_feed_post(request, post_id):
     return render(request, "workouts/delete_feed_post.html", {
         "post": post
     })
+
+
+@login_required
+def toggle_like(request, post_id):
+    post = get_object_or_404(AchievementPost, pk=post_id)
+    
+    existing_like = Like.objects.filter(user=request.user, post=post).first()
+    
+    if existing_like:
+        existing_like.delete()
+        liked = False
+        message = "Like removed"
+    else:
+        Like.objects.create(user=request.user, post=post)
+        liked = True
+        message = "Post liked!"
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'liked': liked,
+            'like_count': post.like_count(),
+            'message': message
+        })
+    
+    messages.success(request, message)
+    return redirect('feed')
+
+
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(AchievementPost, pk=post_id)
+    
+    if request.method == "POST":
+        comment_text = request.POST.get("comment_text", "").strip()
+        
+        if not comment_text:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Comment cannot be empty'})
+            messages.error(request, "Comment cannot be empty.")
+            return redirect("feed")
+        
+        comment = Comment.objects.create(
+            user=request.user,
+            post=post,
+            text=comment_text
+        )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'comment': {
+                    'id': comment.id,
+                    'user': comment.user.username,
+                    'text': comment.text,
+                    'created_at': comment.created_at.strftime('%b %d, %Y %I:%M %p'),
+                    'is_owner': comment.user == request.user
+                }
+            })
+        
+        messages.success(request, "Comment added!")
+    
+    return redirect("feed")
+
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    
+    if comment.user != request.user:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Not authorized'})
+        raise Http404("You are not allowed to delete this comment.")
+    
+    comment.delete()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Comment deleted'})
+    
+    messages.success(request, "Comment deleted.")
+    return redirect("feed")
+
+
+@login_required
+def fetch_weather(request, workout_id):
+    workout = get_object_or_404(Workout, pk=workout_id, user=request.user)
+    
+    if hasattr(workout, 'weather'):
+        messages.info(request, "Weather data already exists for this workout.")
+        return redirect('workout_detail', pk=workout_id)
+    
+    latitude = None
+    longitude = None
+    
+    if hasattr(workout, 'route') and workout.route.route_data:
+        route_data = workout.route.route_data
+        if route_data and len(route_data) > 0:
+            latitude = route_data[0][0]
+            longitude = route_data[0][1]
+    
+    if not latitude or not longitude:
+        latitude = 37.7749
+        longitude = -122.4194
+        messages.warning(request, "No route location found. Using default location for weather data.")
+
+    api_key = getattr(settings, 'OPENWEATHERMAP_API_KEY', None)
+    
+    if not api_key:
+        messages.error(request, "Weather API key not configured. Please add OPENWEATHERMAP_API_KEY to settings.")
+        return redirect('workout_detail', pk=workout_id)
+    
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather"
+        params = {
+            'lat': latitude,
+            'lon': longitude,
+            'appid': api_key,
+            'units': 'metric'  # Celsius
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        WorkoutWeather.objects.create(
+            workout=workout,
+            temperature=data['main']['temp'],
+            feels_like=data['main'].get('feels_like'),
+            humidity=data['main']['humidity'],
+            weather_condition=data['weather'][0]['main'],
+            weather_description=data['weather'][0]['description'],
+            wind_speed=data['wind'].get('speed'),
+            latitude=latitude,
+            longitude=longitude
+        )
+        
+        messages.success(request, "Weather data added successfully!")
+        
+    except requests.RequestException as e:
+        messages.error(request, f"Failed to fetch weather data: {str(e)}")
+    except KeyError as e:
+        messages.error(request, f"Invalid weather data received: {str(e)}")
+    
+    return redirect('workout_detail', pk=workout_id)

@@ -135,6 +135,9 @@
                             <a class="nav-link" href="{% url 'workout_create' %}">+ Log Workout</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{% url 'feed' %}">Community Feed</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'progress_dashboard' %}">Progress Dashboard</a>
                         </li>
                         {% if user.is_staff %}

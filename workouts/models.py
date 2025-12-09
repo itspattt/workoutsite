@@ -48,22 +48,16 @@ class Workout(models.Model):
 
 
 class WorkoutRoute(models.Model):
-    """
-    Model for storing workout route data (GPS coordinates).
-    Allows users to visualize their workout routes on a map.
-    """
     workout = models.OneToOneField(
         Workout, 
         on_delete=models.CASCADE, 
         related_name='route'
     )
     
-    # Store route as JSON array of [lat, lng] coordinates
     route_data = models.JSONField(
         help_text="Array of coordinate pairs [[lat, lng], ...]"
     )
     
-    # Additional route metadata
     start_location = models.CharField(max_length=255, blank=True, null=True)
     end_location = models.CharField(max_length=255, blank=True, null=True)
     
@@ -74,7 +68,6 @@ class WorkoutRoute(models.Model):
 
     @property
     def total_points(self):
-        """Return the number of GPS points in the route"""
         return len(self.route_data) if self.route_data else 0
 
     
@@ -86,7 +79,7 @@ class AchievementPost(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="achievement_posts")
     workout = models.ForeignKey(
         Workout,
-        on_delete=models.CASCADE,   # delete post if workout is deleted
+        on_delete=models.CASCADE,
         related_name="shared_posts"
     )
     
@@ -99,4 +92,71 @@ class AchievementPost(models.Model):
 
     def __str__(self):
         return f"Achievement by {self.user.username} on {self.created_at.strftime('%Y-%m-%d')}"
+    
+    def like_count(self):
+        """Return the number of likes on this post"""
+        return self.likes.count()
+    
+    def is_liked_by(self, user):
+        """Check if a specific user has liked this post"""
+        return self.likes.filter(user=user).exists()
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
+    post = models.ForeignKey(
+        AchievementPost,
+        on_delete=models.CASCADE,
+        related_name="likes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'post')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} likes {self.post}"
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey(
+        AchievementPost,
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+    text = models.TextField(max_length=500, help_text="Add a comment")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.post}"
+
+
+class WorkoutWeather(models.Model):
+    workout = models.OneToOneField(
+        Workout,
+        on_delete=models.CASCADE,
+        related_name='weather'
+    )
+    
+    # Weather data
+    temperature = models.FloatField(help_text="Temperature in Celsius")
+    feels_like = models.FloatField(help_text="Feels like temperature in Celsius", null=True, blank=True)
+    humidity = models.IntegerField(help_text="Humidity percentage")
+    weather_condition = models.CharField(max_length=100, help_text="e.g., Clear, Cloudy, Rain")
+    weather_description = models.CharField(max_length=200, help_text="Detailed description")
+    wind_speed = models.FloatField(help_text="Wind speed in m/s", null=True, blank=True)
+
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Weather for {self.workout.title}: {self.temperature}°C, {self.weather_condition}"
     

@@ -109,6 +109,69 @@
         </div>
         {% endif %}
         
+        <!-- Weather Information -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-cloud-sun"></i> Weather Conditions
+                </h6>
+                
+                {% if workout.weather %}
+                <div class="weather-info">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="weather-icon">
+                            {% if workout.weather.weather_condition == 'Clear' %}
+                                ☀️
+                            {% elif workout.weather.weather_condition == 'Clouds' %}
+                                ☁️
+                            {% elif workout.weather.weather_condition == 'Rain' %}
+                                🌧️
+                            {% elif workout.weather.weather_condition == 'Snow' %}
+                                ❄️
+                            {% else %}
+                                🌤️
+                            {% endif %}
+                        </span>
+                        <div class="text-end">
+                            <div class="h4 mb-0">{{ workout.weather.temperature|floatformat:1 }}°C</div>
+                            <small class="text-muted">{{ workout.weather.weather_description|title }}</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="weather-details small">
+                        {% if workout.weather.feels_like %}
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Feels Like:</span>
+                            <strong>{{ workout.weather.feels_like|floatformat:1 }}°C</strong>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Humidity:</span>
+                            <strong>{{ workout.weather.humidity }}%</strong>
+                        </div>
+                        
+                        {% if workout.weather.wind_speed %}
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Wind Speed:</span>
+                            <strong>{{ workout.weather.wind_speed|floatformat:1 }} m/s</strong>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted small mb-2">No weather data available</p>
+                    <a href="{% url 'fetch_weather' workout.pk %}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-cloud-download"></i> Fetch Weather Data
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
         <a href="{% url 'workout_list' %}" class="btn btn-outline-secondary w-100">
             ← Back to Workouts
         </a>
